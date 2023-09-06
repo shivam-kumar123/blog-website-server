@@ -6,9 +6,29 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const app = express();
 
-dotenv.config()
+const blogsRoute = require('./routes/blog.js');
+
+dotenv.config();
 app.use(cors());
 app.use(express.json());
+
+const isAuthenticated = (req, res, next) => {
+    const {name, email, pswd} = req.body;
+    console.log('authenticating in the middleware');
+    try{
+        if(name === undefined && email !== '' && pswd !== ''){
+            // authenticate from db
+            next();
+        } else if(name !== '' && email !== '' && pswd !== '') {
+            // authenticate from db
+            next();
+        } else {
+            res.status(404).send({error: 'recheck entered data'});
+        }
+    } catch (err) {
+        res.status(500).send({error: err});
+    }
+};
 
 mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PSWD}@blog-cluster-db.uqnr4wn.mongodb.net/test`, {
     useNewUrlParser: true,
@@ -23,26 +43,12 @@ app.get('/', (req, res) => {
     res.send('server is running or port 3001');
 });
 
-app.post('/', (req, res) => {
-    const formData = req.body;
-    // new user save his data in db
-    if(formData.userName !== ''){
+app.use('/blogs', isAuthenticated, blogsRoute);
 
-    }
-    // console.log(`name: ${formData.name}`);
-    // console.log(`email: ${formData.email}`);
-    // console.log(`password: ${formData.pswd}`);
-});
-
-app.post('/new-user', (req, res) => {
-    console.log('new user created');
-    res.status(200).send('<h1>new user created</h1>');
-});
-
-app.post('/existing-user', (req, res) => {
-    console.log('existing user');
-    res.status(200).send('<h1>existing user</h1>');
-});
+// app.post('/blogs', (req, res) => {
+//     console.log('new user created');
+//     res.status(200).send('<h1>new user created</h1>');
+// });
 
 app.listen(PORT, () => {
     console.log(`server started on port ${PORT}`);
